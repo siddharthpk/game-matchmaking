@@ -16,5 +16,18 @@ def joinQueue():
 
     return jsonify({'player_id': player_id, 'status': 'queued', 'skill_level': skill_level})
 
+@app.route('/check_status', methods=['GET'])
+def check_status():
+    player_id = request.args.get('player_id')
+
+    # Mock-up for checking if a player is in a match
+    # In a real application, you would check if the player is part of an active match
+    # For now, we simulate by checking if the player ID is in a specific Redis set for demonstration
+    is_matched = redis_client.sismember('matches', player_id)
+    
+    status = 'in_game' if is_matched else 'in_queue'
+
+    return jsonify({'player_id': player_id, 'status': status})
+
 if __name__ == '__main__':
     app.run(debug=True)
