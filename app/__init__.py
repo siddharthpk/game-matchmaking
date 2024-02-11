@@ -1,10 +1,9 @@
 from flask import Flask
+from .routes.main import main_blueprint
 
 def create_app():
     app = Flask(__name__)
 
-    # Import views from the views module
-    from .views import main as main_blueprint
-    app.register_blueprint(main_blueprint)
+    app.register_blueprint(main_blueprint, url_prefix='/')
 
     return app
