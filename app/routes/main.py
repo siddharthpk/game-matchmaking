@@ -4,7 +4,6 @@ import redis
 
 main_blueprint = Blueprint('main', __name__)
 
-
 redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 @main_blueprint.route('/join_queue', methods=['POST'])
