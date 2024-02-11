@@ -4,17 +4,21 @@ import redis
 
 main_blueprint = Blueprint('main', __name__)
 
+#  Redis is running on localhost and default port
 redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 @main_blueprint.route('/join_queue', methods=['POST'])
 def joinQueue():
     content = request.json
     player_id = str(uuid.uuid4()) # This generates a unique player ID
-    skill_level = content['skill_level'] # This is the metric for matchmaking
+    skill_level = content.get('skill_level', type=float) # This is the metric for matchmaking
 
     # Check if the skill level is provided
     if skill_level is None:
-        return jsonify({"error": "Skill level is required"}), 400
+        try:
+            skill_level = float(skill_level)  # Ensure skill level is a valid float
+        except ValueError:
+            return jsonify({"error": "Skill level is required"}), 400
     
     # Adding a player to the Redis queue
     redis_client.zadd('matchmaking_queue', {player_id: skill_level})
@@ -28,17 +32,14 @@ def check_status():
     if not player_id:
         return jsonify({"error": "Player ID is required"}), 400
 
-    # Check if the player is in the matchmaking queue
-    in_queue = redis_client.zscore('matchmaking_queue', player_id) is not None
-
-    # Assuming we move matched players to an 'in_game' set
-    in_game = redis_client.sismember('in_game', player_id)
-
-    if in_game:
+   # # Check if the player is associated with a match ID in the 'player_matches' hash
+    match_id = redis_client.hget('player_matches', player_id)
+    if match_id:
         status = 'in_game'
-    elif in_queue:
-        status = 'in_queue'
     else:
-        status = 'unknown'  # Player not found in queue or in a game
+        # Additionally, check if they're still in the matchmaking queue
+        in_queue = redis_client.zscore('matchmaking_queue', player_id) is not None
+        status = 'in_queue' if in_queue else 'unknown'
+
 
     return jsonify({"player_id": player_id, "status": status}), 200
