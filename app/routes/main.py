@@ -11,7 +11,7 @@ redis_client = redis.Redis(host='localhost', port=6379, db=0)
 def joinQueue():
     content = request.json
     player_id = str(uuid.uuid4()) # This generates a unique player ID
-    skill_level = content.get('skill_level', type=float) # This is the metric for matchmaking
+    skill_level = content['skill_level'] # This is the metric for matchmaking
 
     # Check if the skill level is provided
     if skill_level is None:
